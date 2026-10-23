@@ -39,9 +39,8 @@
 
             <div class="article-content">
                 <h3>Contenu de l'article</h3>
-                <div class="article-body">
-                    {{ article.content }}
-                </div>
+                {# Pas d'espace autour du contenu : le CSS conserve les espaces (pre-wrap). #}
+                <div class="article-body">{{ article.content }}</div>
             </div>
         </div>
 

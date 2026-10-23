@@ -102,3 +102,8 @@ def test_le_html_des_articles_est_echappe(client):
     page = client.get(f"/article/{article_id}").get_data(as_text=True)
     assert "<script>alert(1)</script>" not in page
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page
+
+
+def test_dates_affichees_en_francais():
+    from main import format_date_filter
+    assert format_date_filter("2026-08-03 14:05:00") == "03 août 2026 à 14:05"

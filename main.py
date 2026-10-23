@@ -138,6 +138,10 @@ def upload_folder():
 
 
 # ── Filtres de Template ─────────────────────────────────────────────
+MONTHS_FR = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+             "août", "septembre", "octobre", "novembre", "décembre")
+
+
 def format_date_filter(date_value):
     """Formate la date pour l'affichage dans les templates"""
     if isinstance(date_value, str):
@@ -152,7 +156,9 @@ def format_date_filter(date_value):
                 return date_value  # Retourner tel quel si impossible à analyser
 
     if isinstance(date_value, datetime):
-        return date_value.strftime('%d %B %Y à %H:%M')
+        # Mois en français sans dépendre de la locale du serveur
+        month = MONTHS_FR[date_value.month - 1]
+        return f"{date_value.day:02d} {month} {date_value.year} à {date_value:%H:%M}"
 
     return str(date_value)  # Solution de secours vers représentation string
 
