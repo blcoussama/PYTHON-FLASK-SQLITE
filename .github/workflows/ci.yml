@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Installer les dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Vérifier la syntaxe
+        run: python -m compileall -q main.py database.py handlers utils scripts tests
+
+      - name: Lancer les tests
+        run: python -m pytest -q
+
+      - name: Script de données de démo
+        env:
+          DATABASE_PATH: ${{ runner.temp }}/demo/blog.db
+          UPLOAD_FOLDER: ${{ runner.temp }}/demo/uploads
+        run: python scripts/seed_demo.py --reset
+
+  audit:
+    name: Audit des dépendances
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: pip-audit
+        run: |
+          pip install pip-audit==2.10.1
+          pip-audit -r requirements.txt
