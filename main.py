@@ -1,18 +1,17 @@
 import os
-import uuid
 from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 from flask import (
     Blueprint, Flask, abort, current_app, g, jsonify, redirect,
-    render_template, request, session, url_for
+    render_template, request, send_from_directory, session, url_for
 )
 from flask_wtf.csrf import CSRFError, CSRFProtect
-from werkzeug.utils import secure_filename
 
 from database import Database
 from handlers.article_handler import ArticleHandler
 from handlers.auth_handler import AuthHandler
+from utils.uploads import STORED_NAME, InvalidImage, delete_image, save_image
 
 bp = Blueprint("blog", __name__)
 csrf = CSRFProtect()
@@ -22,9 +21,6 @@ JSON_ENDPOINTS = {
     "blog.delete_article", "blog.like_article",
     "blog.save_article", "blog.comment_article",
 }
-
-# On autorise seulement ces extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 
 def _env_flag(name, default=False):
@@ -46,10 +42,12 @@ def create_app(test_config=None):
         DATABASE_PATH=os.environ.get(
             "DATABASE_PATH", os.path.join(app.root_path, "data", "blog.db")
         ),
-        # On va stocker les fichiers uploadés dans static/uploads
+        # Images envoyées : hors de static/, servies par la route /uploads/.
         UPLOAD_FOLDER=os.environ.get(
-            "UPLOAD_FOLDER", os.path.join(app.root_path, "static", "uploads")
+            "UPLOAD_FOLDER", os.path.join(app.root_path, "data", "uploads")
         ),
+        # Taille maximale d'une requête : image de 5 Mo + champs texte.
+        MAX_CONTENT_LENGTH=6 * 1024 * 1024,
         # Cookie de session : inaccessible au JavaScript, non envoyé par les
         # requêtes intersites (sauf navigation GET), HTTPS uniquement hors debug.
         SESSION_COOKIE_HTTPONLY=True,
@@ -82,6 +80,8 @@ def create_app(test_config=None):
 
     app.add_template_filter(format_date_filter, "format_date")
     app.add_template_filter(truncate_filter, "truncate")
+    app.add_template_global(upload_url, "upload_url")
+    app.after_request(set_security_headers)
     app.register_blueprint(bp)
     register_error_handlers(app)
     return app
@@ -110,15 +110,31 @@ def register_error_handlers(app):
     def not_found(error):
         return error_response(404, "Page introuvable.")
 
+    @app.errorhandler(413)
+    def too_large(error):
+        return error_response(413, "Fichier trop volumineux (5 Mo maximum).")
+
+
+def set_security_headers(response):
+    # Le navigateur ne doit jamais « deviner » un type différent de celui
+    # annoncé, ni afficher le site dans un cadre d'un autre site.
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    return response
+
 
 def services():
     return current_app.extensions["blog"]
 
 
-def allowed_file(filename):
-    """Retourne True si l’extension du fichier est autorisée."""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def upload_url(filename):
+    """URL d'une image d'article (utilisable dans les templates)."""
+    return url_for("blog.uploaded_file", filename=filename)
+
+
+def upload_folder():
+    return current_app.config["UPLOAD_FOLDER"]
 
 
 # ── Filtres de Template ─────────────────────────────────────────────
@@ -245,27 +261,20 @@ def create_article():
         description = request.form.get("description", "").strip()
         content = request.form.get("content", "").strip()
 
-        # 2) Récupérer et valider l’image uploadée
+        # 2) Récupérer et valider l’image uploadée (contenu vérifié par Pillow)
         image_file = request.files.get("image")
         saved_filename = None
 
         if image_file and image_file.filename:
-            if allowed_file(image_file.filename):
-                original_name = secure_filename(image_file.filename)
-                unique_name = f"{uuid.uuid4().hex}_{original_name}"
-                saved_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name)
-                # Sauvegarde physique dans static/uploads/
-                image_file.save(saved_path)
-                # On gardera en base : “uploads/nom_du_fichier.png”
-                saved_filename = f"uploads/{unique_name}"
-            else:
-                # Message d’erreur si extension non autorisée
+            try:
+                saved_filename = save_image(image_file, upload_folder())
+            except InvalidImage as error:
                 return render_template(
                     "articles/create.html",
                     title="Créer un article - Blog Platform",
                     user=user,
-                    error="Type de fichier invalide. Seuls PNG/JPG/JPEG sont autorisés."
-                )
+                    error=str(error)
+                ), 400
 
         # 3) Appeler la méthode ArticleHandler (ajustée pour ces nouveaux paramètres)
         result = services().articles.create_article(
@@ -279,6 +288,7 @@ def create_article():
         if result["success"]:
             return redirect(url_for("blog.article_detail", article_id=result["article_id"]))
         else:
+            delete_image(saved_filename, upload_folder())  # article non créé
             return render_template(
                 "articles/create.html",
                 title="Créer un article - Blog Platform",
@@ -331,27 +341,31 @@ def edit_article(article_id):
         description = request.form.get("description", "").strip()
         content = request.form.get("content", "").strip()
 
-        # 3) Gérer le nouvel upload éventuel
+        # 3) Image : nouvelle image, suppression demandée, ou image actuelle
+        old_filename = article.get("image_filename")
         image_file = request.files.get("image")
-        saved_filename = article.get("image_filename")  # Valeur actuelle dans la BD, si aucune modif
+        new_filename = None
 
         # Si l’utilisateur a choisi une nouvelle image…
         if image_file and image_file.filename:
-            if allowed_file(image_file.filename):
-                original_name = secure_filename(image_file.filename)
-                unique_name = f"{uuid.uuid4().hex}_{original_name}"
-                saved_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name)
-                image_file.save(saved_path)
-                # On écrase la valeur précédente ou on la remplace
-                saved_filename = f"uploads/{unique_name}"
-            else:
+            try:
+                new_filename = save_image(image_file, upload_folder())
+            except InvalidImage as error:
                 return render_template(
                     "articles/edit.html",
                     title=f"Modifier {article['title']} - Blog Platform",
                     user=user,
                     article=article,
-                    error="Type de fichier invalide. Seuls PNG/JPG/JPEG sont autorisés."
-                )
+                    error=str(error)
+                ), 400
+
+        if new_filename:
+            saved_filename = new_filename
+        elif request.form.get("remove_image") == "true":
+            # Bouton « Supprimer l'image » du formulaire
+            saved_filename = None
+        else:
+            saved_filename = old_filename
 
         # 4) Appeler la méthode ArticleHandler.edit_article(...) mise à jour
         result = services().articles.edit_article(
@@ -364,8 +378,12 @@ def edit_article(article_id):
         )
 
         if result["success"]:
+            # L'ancienne image remplacée ou retirée ne reste pas sur le disque.
+            if old_filename and old_filename != saved_filename:
+                delete_image(old_filename, upload_folder())
             return redirect(url_for("blog.article_detail", article_id=article_id))
         else:
+            delete_image(new_filename, upload_folder())  # modification refusée
             return render_template(
                 "articles/edit.html",
                 title=f"Modifier {article['title']} - Blog Platform",
@@ -389,7 +407,10 @@ def delete_article(article_id):
     if not user:
         return jsonify(success=False, error="Non authentifié"), 401
 
+    article = services().db.get_article_by_id(article_id)
     result = services().articles.delete_article(article_id, user["id"])
+    if result["success"] and article:
+        delete_image(article.get("image_filename"), upload_folder())
     return jsonify(result), (200 if result["success"] else 403)
 
 
@@ -418,6 +439,14 @@ def comment_article(article_id):
         return jsonify(success=False, error="Non authentifié"), 401
     result = services().articles.add_comment(article_id, request.form, user["id"])
     return jsonify(result), (200 if result["success"] else 400)
+
+
+@bp.route("/uploads/<filename>")
+def uploaded_file(filename):
+    # Seuls les noms générés par save_image() sont servis.
+    if not STORED_NAME.match(filename):
+        abort(404)
+    return send_from_directory(upload_folder(), filename)
 
 
 @bp.route("/my-articles")

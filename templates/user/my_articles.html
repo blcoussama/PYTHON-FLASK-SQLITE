@@ -36,7 +36,7 @@
         <div class="card-header">
             <div class="article-image-container">
                 {% if a.image_filename %}
-                <img src="/static/{{ a.image_filename }}" alt="{{ a.title }}" class="article-image" />
+                <img src="{{ upload_url(a.image_filename) }}" alt="{{ a.title }}" class="article-image" />
                 <div class="image-overlay">
                     <a href="/article/{{ a.id }}" class="image-link">
                         <i class="fas fa-eye"></i>

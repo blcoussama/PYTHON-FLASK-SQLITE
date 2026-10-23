@@ -56,11 +56,11 @@
 
             {% if article.image_filename %}
             <div class="current-image" id="currentImageContainer">
-                <img src="/static/{{ article.image_filename }}" alt="Image actuelle">
+                <img src="{{ upload_url(article.image_filename) }}" alt="Image actuelle">
                 <div class="current-image-info">
                     <h4><i class="fas fa-image"></i> Image actuelle</h4>
                     <div class="current-image-actions">
-                        <a href="/static/{{ article.image_filename }}" target="_blank">
+                        <a href="{{ upload_url(article.image_filename) }}" target="_blank">
                             <i class="fas fa-external-link-alt"></i>
                             Voir en grand
                         </a>

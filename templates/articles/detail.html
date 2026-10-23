@@ -20,7 +20,7 @@
         <div class="hero-image-section">
             {% if article.image_filename %}
             <div class="article-hero">
-                <img src="/static/{{ article.image_filename }}" alt="{{ article.title }}" class="hero-image">
+                <img src="{{ upload_url(article.image_filename) }}" alt="{{ article.title }}" class="hero-image">
                 <div class="hero-overlay"></div>
             </div>
             {% endif %}

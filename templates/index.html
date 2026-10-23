@@ -46,7 +46,7 @@
             <a href="/article/{{ a.id }}" class="article-link">
                 {# Preserved original image logic with enhanced styling #}
                 {% if a.image_filename %}
-                <img src="/static/{{ a.image_filename }}" alt="{{ a.title }}" class="article-image">
+                <img src="{{ upload_url(a.image_filename) }}" alt="{{ a.title }}" class="article-image">
                 {% else %}
                 <div class="article-placeholder">
                     <i class="fas fa-file-alt"></i>
