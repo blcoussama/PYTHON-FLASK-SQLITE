@@ -493,6 +493,8 @@ def saved_articles():
 
 # ── Exécution ───────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     try:
         from dotenv import load_dotenv  # lit un fichier .env local s'il existe
         load_dotenv()

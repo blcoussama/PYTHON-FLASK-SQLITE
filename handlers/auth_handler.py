@@ -1,5 +1,9 @@
+import logging
 
 import re
+
+logger = logging.getLogger(__name__)
+
 
 class AuthHandler:
     def __init__(self, database):
@@ -22,7 +26,8 @@ class AuthHandler:
 
             return {'success': True, 'user': user}
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans login")
             return {'success': False, 'error': 'Erreur lors de la connexion'}
 
     def register(self, form):
@@ -52,7 +57,8 @@ class AuthHandler:
 
             return {'success': True, 'user': user}
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans register")
             return {'success': False, 'error': 'Erreur lors de l\'inscription'}
 
     def validate_registration_data(self, username, email, password, confirm_password):

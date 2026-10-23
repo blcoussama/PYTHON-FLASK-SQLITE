@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class ArticleHandler:
     def __init__(self, database):
@@ -34,8 +38,8 @@ class ArticleHandler:
 
             return {"success": True, "article_id": article_id}
 
-        except Exception as e:
-            # Vous pouvez logger “e” si besoin pour débogage
+        except Exception:
+            logger.exception("Erreur inattendue dans create_article")
             return {"success": False, "error": "Erreur lors de la création de l’article"}
 
     def edit_article(self, article_id, title, description, content, image_filename, user_id):
@@ -76,8 +80,8 @@ class ArticleHandler:
 
             return {"success": True}
 
-        except Exception as e:
-            # Vous pouvez logger “e” si besoin
+        except Exception:
+            logger.exception("Erreur inattendue dans edit_article")
             return {"success": False, "error": "Erreur lors de la modification de l’article"}
 
     def delete_article(self, article_id, user_id):
@@ -95,7 +99,8 @@ class ArticleHandler:
 
             return {'success': True}
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans delete_article")
             return {'success': False, 'error': 'Erreur lors de la suppression de l\'article'}
 
     def toggle_like(self, article_id, user_id):
@@ -114,7 +119,8 @@ class ArticleHandler:
                 'likes_count': result['likes_count']
             }
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans toggle_like")
             return {'success': False, 'error': 'Erreur lors du like'}
 
     def toggle_save(self, article_id, user_id):
@@ -132,7 +138,8 @@ class ArticleHandler:
                 'saved': result['saved']
             }
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans toggle_save")
             return {'success': False, 'error': 'Erreur lors de la sauvegarde'}
 
     def add_comment(self, article_id, form, user_id):
@@ -166,7 +173,8 @@ class ArticleHandler:
                 'comments_count': len(comments)
             }
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Erreur inattendue dans add_comment")
             return {'success': False, 'error': 'Erreur lors de l\'ajout du commentaire'}
 
     def validate_article_data(self, title, content):

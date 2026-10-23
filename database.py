@@ -31,9 +31,12 @@ class Database:
             os.makedirs(directory, exist_ok=True)
 
     def get_connection(self):
-        """Ouvre une connexion SQLite (lignes accessibles par nom de colonne)."""
+        """Ouvre une connexion SQLite avec les clés étrangères activées."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        # SQLite n'applique les FOREIGN KEY / ON DELETE CASCADE que si on le
+        # demande explicitement, à chaque connexion.
+        conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
     @contextmanager
