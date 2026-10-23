@@ -3,6 +3,13 @@
  * Handles common functionality across all pages
  */
 
+// En-têtes à joindre aux requêtes fetch() en POST : jeton CSRF lu dans la
+// balise <meta name="csrf-token"> de base.html (vérifié par Flask-WTF).
+function csrfHeaders(extra = {}) {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return { ...extra, 'X-CSRFToken': meta ? meta.content : '' };
+}
+
 // Auto-dismiss alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', () => {
     const alerts = document.querySelectorAll('.alert');

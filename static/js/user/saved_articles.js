@@ -5,7 +5,7 @@
             const id = btn.dataset.id;
             const res = await fetch(`/save-article/${id}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                headers: csrfHeaders()
             });
             const d = await res.json();
             if (d.success && !d.saved) {

@@ -6,7 +6,7 @@
 
         fetch('/delete-article/' + articleId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: csrfHeaders()
         })
             .then(res => res.json())
             .then(data => {

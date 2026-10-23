@@ -14,6 +14,7 @@
 
     <!-- Preserved original form structure with enhanced styling -->
     <form method="POST" action="/edit-article/{{ article.id }}" enctype="multipart/form-data" class="edit-form" id="editForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Alert for editing mode -->
         <div class="alert alert-warning">

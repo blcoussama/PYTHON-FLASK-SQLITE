@@ -7,6 +7,7 @@ from flask import (
     Blueprint, Flask, abort, current_app, g, jsonify, redirect,
     render_template, request, session, url_for
 )
+from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.utils import secure_filename
 
 from database import Database
@@ -14,6 +15,13 @@ from handlers.article_handler import ArticleHandler
 from handlers.auth_handler import AuthHandler
 
 bp = Blueprint("blog", __name__)
+csrf = CSRFProtect()
+
+# Routes appelées en fetch() par le JavaScript : leurs erreurs sont en JSON.
+JSON_ENDPOINTS = {
+    "blog.delete_article", "blog.like_article",
+    "blog.save_article", "blog.comment_article",
+}
 
 # On autorise seulement ces extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -68,10 +76,39 @@ def create_app(test_config=None):
         articles=ArticleHandler(db),
     )
 
+    # Jeton CSRF exigé sur toutes les requêtes POST (champ caché csrf_token des
+    # formulaires, en-tête X-CSRFToken pour les appels fetch()).
+    csrf.init_app(app)
+
     app.add_template_filter(format_date_filter, "format_date")
     app.add_template_filter(truncate_filter, "truncate")
     app.register_blueprint(bp)
+    register_error_handlers(app)
     return app
+
+
+def register_error_handlers(app):
+    def error_response(code, message):
+        if request.endpoint in JSON_ENDPOINTS:
+            return jsonify(success=False, error=message), code
+        return render_template(
+            "error.html", title=f"Erreur {code} - Blog Platform",
+            user=get_current_user(), code=code, message=message,
+        ), code
+
+    @app.errorhandler(CSRFError)
+    def csrf_error(error):
+        return error_response(
+            400, "Jeton de sécurité (CSRF) manquant ou expiré : rechargez la page et réessayez."
+        )
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return error_response(403, "Vous n'avez pas le droit d'effectuer cette action.")
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return error_response(404, "Page introuvable.")
 
 
 def services():

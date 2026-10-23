@@ -61,7 +61,7 @@
         btn.classList.add('loading');
         btn.disabled = true;
 
-        fetch('/like-article/' + articleId, { method: 'POST' })
+        fetch('/like-article/' + articleId, { method: 'POST', headers: csrfHeaders() })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -87,7 +87,7 @@
         btn.classList.add('loading');
         btn.disabled = true;
 
-        fetch('/save-article/' + articleId, { method: 'POST' })
+        fetch('/save-article/' + articleId, { method: 'POST', headers: csrfHeaders() })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -110,7 +110,7 @@
     function deleteArticle(articleId) {
         if (!confirm('Êtes-vous sûr de supprimer cet article ?')) return;
 
-        fetch('/delete-article/' + articleId, { method: 'POST' })
+        fetch('/delete-article/' + articleId, { method: 'POST', headers: csrfHeaders() })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -142,7 +142,7 @@
         const body = new URLSearchParams({ content });
         fetch('/comment-article/' + articleId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: csrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
             body: body.toString()
         })
             .then(r => r.json())

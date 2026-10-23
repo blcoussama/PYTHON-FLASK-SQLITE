@@ -28,6 +28,7 @@
 
     <!-- Preserved original form structure with enhanced styling -->
     <form method="POST" action="/create-article" enctype="multipart/form-data" class="create-form" id="articleForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Champ "Titre" (preserved original structure) -->
         <div class="form-group">
             <label for="title">

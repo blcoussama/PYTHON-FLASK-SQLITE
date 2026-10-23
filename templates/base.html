@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ title }}</title>
 
     <!-- Preconnect for performance -->
@@ -61,7 +62,7 @@
     {% include "partials/footer.html" %}
 
     <!-- Base JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     <script src="{{ url_for('static', filename='js/partials/navbar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/partials/footer.js') }}"></script>
 

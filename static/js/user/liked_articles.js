@@ -7,7 +7,7 @@
             try {
                 const response = await fetch(`/like-article/${articleId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    headers: csrfHeaders()
                 });
                 const result = await response.json();
 
