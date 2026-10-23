@@ -1,19 +1,15 @@
 
-import urllib.parse
 import re
 
 class AuthHandler:
-    def __init__(self, database, session_manager):
+    def __init__(self, database):
         self.db = database
-        self.session_manager = session_manager
 
-    def login(self, post_data):
-        """Handle user login"""
+    def login(self, form):
+        """Handle user login (form : request.form ou tout dictionnaire)"""
         try:
-            # Parse form data
-            data = urllib.parse.parse_qs(post_data)
-            username = data.get('username', [''])[0].strip()
-            password = data.get('password', [''])[0]
+            username = form.get('username', '').strip()
+            password = form.get('password', '')
 
             # Validate input
             if not username or not password:
@@ -29,15 +25,13 @@ class AuthHandler:
         except Exception as e:
             return {'success': False, 'error': 'Erreur lors de la connexion'}
 
-    def register(self, post_data):
-        """Handle user registration"""
+    def register(self, form):
+        """Handle user registration (form : request.form ou tout dictionnaire)"""
         try:
-            # Parse form data
-            data = urllib.parse.parse_qs(post_data)
-            username = data.get('username', [''])[0].strip()
-            email = data.get('email', [''])[0].strip()
-            password = data.get('password', [''])[0]
-            confirm_password = data.get('confirm_password', [''])[0]
+            username = form.get('username', '').strip()
+            email = form.get('email', '').strip().lower()
+            password = form.get('password', '')
+            confirm_password = form.get('confirm_password', '')
 
             # Validate input
             validation_result = self.validate_registration_data(username, email, password, confirm_password)
@@ -71,8 +65,8 @@ class AuthHandler:
         if len(username) < 3:
             return {'valid': False, 'error': 'Le nom d\'utilisateur doit contenir au moins 3 caractères'}
         
-        if len(username) > 50:
-            return {'valid': False, 'error': 'Le nom d\'utilisateur ne peut pas dépasser 50 caractères'}
+        if len(username) > 20:
+            return {'valid': False, 'error': 'Le nom d\'utilisateur ne peut pas dépasser 20 caractères'}
 
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             return {'valid': False, 'error': 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et underscore'}
@@ -83,8 +77,8 @@ class AuthHandler:
             return {'valid': False, 'error': 'Adresse email invalide'}
 
         # Validate password
-        if len(password) < 6:
-            return {'valid': False, 'error': 'Le mot de passe doit contenir au moins 6 caractères'}
+        if len(password) < 8:
+            return {'valid': False, 'error': 'Le mot de passe doit contenir au moins 8 caractères'}
 
         if len(password) > 100:
             return {'valid': False, 'error': 'Le mot de passe ne peut pas dépasser 100 caractères'}

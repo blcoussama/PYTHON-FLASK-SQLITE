@@ -1,10 +1,7 @@
 
-import urllib.parse
-
 class ArticleHandler:
-    def __init__(self, database, session_manager):
+    def __init__(self, database):
         self.db = database
-        self.session_manager = session_manager
 
     def create_article(self, title, description, content, image_filename, user_id):
         """
@@ -138,17 +135,15 @@ class ArticleHandler:
         except Exception as e:
             return {'success': False, 'error': 'Erreur lors de la sauvegarde'}
 
-    def add_comment(self, article_id, post_data, user_id):
-        """Add a comment to an article"""
+    def add_comment(self, article_id, form, user_id):
+        """Add a comment to an article (form : request.form ou tout dictionnaire)"""
         try:
             # Check if article exists
             article = self.db.get_article_by_id(article_id)
             if not article:
                 return {'success': False, 'error': 'Article non trouvé'}
 
-            # Parse form data
-            data = urllib.parse.parse_qs(post_data)
-            content = data.get('content', [''])[0].strip()
+            content = form.get('content', '').strip()
 
             # Validate comment
             if not content:

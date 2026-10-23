@@ -202,22 +202,46 @@
 }
 
 /* Style spécial pour le lien de déconnexion */
-.nav-dropdown-content a.logout-link {
+.nav-dropdown-content .logout-link {
     color: #dc3545;
     padding-top: 0.8rem;
 }
 
-.nav-dropdown-content a.logout-link i {
+.nav-dropdown-content .logout-link i {
     color: #dc3545;
 }
 
-.nav-dropdown-content a.logout-link:hover {
+.nav-dropdown-content .logout-link:hover {
     background: rgba(220, 53, 69, 0.1);
     color: #c82333;
 }
 
-.nav-dropdown-content a.logout-link:hover i {
+.nav-dropdown-content .logout-link:hover i {
     color: #c82333;
+}
+
+/* La déconnexion est un formulaire POST : le bouton reprend l'aspect des liens */
+.logout-form {
+    margin: 0;
+}
+
+.nav-dropdown-content button.logout-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.8rem 1.2rem;
+    background: none;
+    border: none;
+    font: inherit;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-dropdown-content button.logout-link i {
+    margin-right: 0.7rem;
+    width: 16px;
 }
 
 /* Supprimer le padding en bas des éléments avant le séparateur */
@@ -342,20 +366,20 @@
     }
 
     /* Style mobile pour le lien de déconnexion */
-    .nav-dropdown-content a.logout-link {
+    .nav-dropdown-content .logout-link {
         color: #ff6b6b;
     }
 
-    .nav-dropdown-content a.logout-link i {
+    .nav-dropdown-content .logout-link i {
         color: #ff6b6b;
     }
 
-    .nav-dropdown-content a.logout-link:hover {
+    .nav-dropdown-content .logout-link:hover {
         background: rgba(255, 107, 107, 0.1);
         color: #ff5252;
     }
 
-    .nav-dropdown-content a.logout-link:hover i {
+    .nav-dropdown-content .logout-link:hover i {
         color: #ff5252;
     }
 }
