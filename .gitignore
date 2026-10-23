@@ -1,0 +1,36 @@
+# Environnements virtuels
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Tests et couverture
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Données d'exécution : base SQLite et images envoyées (jamais versionnées)
+data/
+instance/
+*.db
+*.sqlite3
+
+# Configuration locale (secrets)
+.env
+.env.*
+!.env.example
+
+# Éditeurs et systèmes
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
